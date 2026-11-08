@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Kronwerke Twitch</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<div id="login" class="login" hidden>
+  <div class="card">
+    <p class="mark">Kronwerke</p>
+    <h1>Twitch-Bot</h1>
+    <p class="mute">Kommandos, Timer und alle Chats an einem Ort.</p>
+    <a class="btn twitch" href="/auth/login">Mit Twitch anmelden</a>
+  </div>
+</div>
+
+<div id="app" class="app" hidden>
+  <header class="top">
+    <p class="brand"><span class="mark">Kronwerke</span> Twitch</p>
+    <p class="status" id="status"></p>
+    <p class="who"><span id="me"></span> <button class="ghost" id="logout" type="button">Abmelden</button></p>
+  </header>
+  <nav class="tabs" id="tabs">
+    <a href="#overview">Übersicht</a>
+    <a href="#chat">Live-Chat</a>
+    <a href="#channels">Kanäle</a>
+    <a href="#commands">Commands</a>
+    <a href="#timers">Timer</a>
+    <a href="#settings">Einstellungen</a>
+    <a href="#access">Zugänge</a>
+    <a href="#log">Protokoll</a>
+  </nav>
+  <main>
+    <section id="overview" class="view">
+      <div class="grid">
+        <article class="panel" id="bot-panel"></article>
+        <article class="panel" id="start-panel"></article>
+        <article class="panel wide" id="live-panel"></article>
+      </div>
+    </section>
+
+    <section id="chat" class="view chatview">
+      <div class="chatbar">
+        <select id="chat-filter" aria-label="Kanal filtern"><option value="">Alle Kanäle</option></select>
+        <label class="check"><input type="checkbox" id="chat-pause"> Anhalten</label>
+      </div>
+      <ol class="feed" id="feed" aria-live="polite"></ol>
+      <form class="say" id="say">
+        <select id="say-channel" aria-label="Kanal" required></select>
+        <input id="say-text" maxlength="480" placeholder="Als Bot schreiben, Platzhalter wie {start} gehen auch" autocomplete="off" required>
+        <button class="btn" type="submit">Senden</button>
+      </form>
+    </section>
+
+    <section id="channels" class="view">
+      <form class="row" id="add-channel">
+        <input id="channel-login" placeholder="Twitch-Name oder Link" required autocomplete="off">
+        <input id="channel-note" placeholder="Notiz (optional)" autocomplete="off">
+        <button class="btn" type="submit">Kanal hinzufügen</button>
+      </form>
+      <div class="list" id="channel-list"></div>
+    </section>
+
+    <section id="commands" class="view">
+      <div class="split">
+        <div>
+          <p class="row"><button class="btn" id="new-command" type="button">Neuer Command</button></p>
+          <div class="list" id="command-list"></div>
+        </div>
+        <form class="panel editor" id="command-form" hidden>
+          <h2 id="command-title">Command</h2>
+          <label>Name<span class="prefix"><span>!</span><input name="name" required pattern="[a-zA-Z0-9_äöüÄÖÜ]{1,30}" autocomplete="off"></span></label>
+          <label>Weitere Namen <small>mit Komma getrennt</small><input name="aliases" autocomplete="off"></label>
+          <label>Antwort<textarea name="response" rows="4" maxlength="480" required></textarea></label>
+          <p class="preview" id="command-preview"></p>
+          <div class="cols">
+            <label>Abklingzeit in Sekunden<input name="cooldown" type="number" min="0" max="3600" value="30"></label>
+            <label>Nur in Kanälen<select name="channels" multiple size="4"></select><small>Nichts gewählt heisst überall</small></label>
+          </div>
+          <label class="check"><input type="checkbox" name="enabled" checked> Aktiv</label>
+          <label class="check"><input type="checkbox" name="mod_only"> Nur Mods und Streamer</label>
+          <p class="actions"><button class="btn" type="submit">Speichern</button> <button class="ghost" type="button" id="command-cancel">Abbrechen</button> <button class="danger" type="button" id="command-delete">Löschen</button></p>
+          <details class="help"><summary>Platzhalter</summary><dl id="placeholders"></dl></details>
+        </form>
+      </div>
+    </section>
+
+    <section id="timers" class="view">
+      <div class="split">
+        <div>
+          <p class="row"><button class="btn" id="new-timer" type="button">Neuer Timer</button></p>
+          <div class="list" id="timer-list"></div>
+        </div>
+        <form class="panel editor" id="timer-form" hidden>
+          <h2>Timer</h2>
+          <label>Name<input name="name" required autocomplete="off"></label>
+          <label>Text<textarea name="text" rows="4" maxlength="480" required></textarea></label>
+          <p class="preview" id="timer-preview"></p>
+          <div class="cols">
+            <label>Alle wie viele Minuten<input name="minutes" type="number" min="5" value="30"></label>
+            <label>Mindestens so viele Chatzeilen dazwischen<input name="min_lines" type="number" min="0" value="15"></label>
+          </div>
+          <label>Nur in Kanälen<select name="channels" multiple size="4"></select><small>Nichts gewählt heisst überall</small></label>
+          <label class="check"><input type="checkbox" name="enabled" checked> Aktiv</label>
+          <label class="check"><input type="checkbox" name="live_only" checked> Nur wenn der Kanal live ist</label>
+          <p class="actions"><button class="btn" type="submit">Speichern</button> <button class="ghost" type="button" id="timer-cancel">Abbrechen</button> <button class="danger" type="button" id="timer-delete">Löschen</button></p>
+        </form>
+      </div>
+    </section>
+
+    <section id="settings" class="view">
+      <form class="panel narrow" id="settings-form">
+        <h2>Was die Platzhalter einsetzen</h2>
+        <label>Start der Season <small>Ortszeit, als 2027-01-16T18:00</small><input name="start" required></label>
+        <label>Discord-Einladung <small>{discord}</small><input name="discord" type="url"></label>
+        <label>Website <small>{website}</small><input name="website" type="url"></label>
+        <label>Serveradresse <small>{server}</small><input name="server"></label>
+        <p class="actions"><button class="btn" type="submit">Speichern</button></p>
+      </form>
+    </section>
+
+    <section id="access" class="view">
+      <form class="row" id="add-user">
+        <input id="user-login" placeholder="Twitch-Name" required autocomplete="off">
+        <button class="btn" type="submit">Zugang geben</button>
+      </form>
+      <p class="mute">Ein neuer Zugang wird bei der ersten Anmeldung an die Twitch-ID gebunden. Wer danach seinen Namen ändert, behält den Zugang; ein anderes Konto mit dem alten Namen bekommt ihn nicht.</p>
+      <div class="list" id="user-list"></div>
+    </section>
+
+    <section id="log" class="view">
+      <ol class="log" id="log-list"></ol>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+</body>
+</html>
