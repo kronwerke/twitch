@@ -320,3 +320,68 @@ func TestOverviewHasNoNullLists(t *testing.T) {
 		}
 	}
 }
+
+// The live stream says it is alive with a named event, which plain message listeners do
+// not see, and still carries every change as a plain message.
+func TestEventsStreamPingsAndCarriesChanges(t *testing.T) {
+	a, srv, _ := newTestApp(t)
+	a.ssePing = 50 * time.Millisecond
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	req, _ := http.NewRequestWithContext(ctx, "GET", srv.URL+"/api/events", nil)
+	req.Header.Set("Authorization", "Bearer "+strings.Repeat("a", 40))
+	r, err := srv.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Body.Close()
+	if ct := r.Header.Get("Content-Type"); ct != "text/event-stream" {
+		t.Fatalf("content type %q", ct)
+	}
+	lines := bufio.NewScanner(r.Body)
+	next := func(want func(string) bool) string {
+		t.Helper()
+		for lines.Scan() {
+			if want(lines.Text()) {
+				return lines.Text()
+			}
+		}
+		t.Fatalf("stream ended: %v", lines.Err())
+		return ""
+	}
+	next(func(l string) bool { return l == "event: ping" })
+	if l := next(func(string) bool { return true }); l != "data: {}" {
+		t.Fatalf("ping data %q", l)
+	}
+	req2, _ := http.NewRequest("PATCH", srv.URL+"/api/settings", strings.NewReader(`{"server":"neu.kronwerke.net"}`))
+	req2.Header.Set("Authorization", "Bearer "+strings.Repeat("a", 40))
+	if r2, err := srv.Client().Do(req2); err != nil || r2.StatusCode != 204 {
+		t.Fatalf("settings: %v %v", err, r2)
+	}
+	l := next(func(l string) bool { return strings.HasPrefix(l, "data: {\"kind\":\"state\"") })
+	var ev struct {
+		Kind  string
+		State Overview
+	}
+	if err := json.Unmarshal([]byte(strings.TrimPrefix(l, "data: ")), &ev); err != nil || ev.State.Settings["server"] != "neu.kronwerke.net" {
+		t.Fatalf("state %v %+v", err, ev.State.Settings)
+	}
+}
+
+func TestFontsAreCachedAndPagesAreNot(t *testing.T) {
+	_, srv, _ := newTestApp(t)
+	r, err := srv.Client().Get(srv.URL + "/fonts/schibsted-grotesk-latin-wght-normal.woff2")
+	if err != nil || r.StatusCode != 200 {
+		t.Fatalf("font: %v %v", err, r)
+	}
+	if cc := r.Header.Get("Cache-Control"); !strings.Contains(cc, "immutable") {
+		t.Errorf("font cache %q", cc)
+	}
+	r, _ = srv.Client().Get(srv.URL + "/")
+	if cc := r.Header.Get("Cache-Control"); cc != "no-cache" {
+		t.Errorf("page cache %q", cc)
+	}
+	if csp := r.Header.Get("Content-Security-Policy"); !strings.Contains(csp, "default-src 'self'") {
+		t.Errorf("csp %q", csp)
+	}
+}

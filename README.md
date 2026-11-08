@@ -36,7 +36,7 @@ Everything the dashboard does is an API call. Without a browser, send `Authoriza
 | --- | --- |
 | `GET /api/overview` | Bot account, chat state, channels with live state, commands, timers, settings, accounts |
 | `GET /api/chat?n=200&channel=` | The last chat lines |
-| `GET /api/events` | Server sent events: every chat line and every change |
+| `GET /api/events` | Server sent events: every chat line (`{"kind":"message"}`) and every change (`{"kind":"state"}`), and a named `ping` event every 25 s |
 | `POST /api/chat` `{"channel","text"}` | Write as the bot (placeholders work) |
 | `POST /api/channels` `{"login","note"}` | Add a channel, the bot joins at once |
 | `PATCH /api/channels/{login}` `{"enabled","website","note"}` | Change it |

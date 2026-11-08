@@ -2,142 +2,428 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#0d0b10">
+<meta name="color-scheme" content="dark">
 <title>Kronwerke Twitch</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="app.css">
 <script src="app.js" defer></script>
 </head>
-<body>
+<body class="booting">
+<svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-overview" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="9" rx="1.8"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.8"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.8"/><rect x="3.5" y="15.5" width="7" height="5" rx="1.8"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2.5 21.5z"/><path d="M8.5 10.5h7M8.5 14h4"/></symbol>
+  <symbol id="i-channels" viewBox="0 0 24 24"><rect x="2.5" y="7" width="19" height="13.5" rx="3"/><path d="m16.5 2.5-4.5 4.5-4.5-4.5"/></symbol>
+  <symbol id="i-commands" viewBox="0 0 24 24"><rect x="3" y="3.5" width="18" height="17" rx="3.5"/><path d="m7.5 9.5 3 2.5-3 2.5M12.5 15h4"/></symbol>
+  <symbol id="i-timers" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 10v3.5l2.5 2M9.5 2.5h5M19 6l1.5-1.5"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 6.5h9M19 6.5h1M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="16" cy="6.5" r="2.3"/><circle cx="9" cy="12" r="2.3"/><circle cx="17" cy="17.5" r="2.3"/></symbol>
+  <symbol id="i-access" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.3a6.5 6.5 0 0 1 3 5.7"/></symbol>
+  <symbol id="i-log" viewBox="0 0 24 24"><path d="M9 6h11.5M9 12h11.5M9 18h11.5M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18.5" cy="12" r="1.4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4.5h6V7"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M21.5 2.5 11 13"/><path d="M21.5 2.5 15 21l-4-8-8-4z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7.5 5.2v13.6a.8.8 0 0 0 1.2.7l10.6-6.8a.8.8 0 0 0 0-1.4L8.7 4.5a.8.8 0 0 0-1.2.7z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.6-4.4L4 8.5M4 3.5v5h5M4 13a8 8 0 0 0 14.6 4.4l1.4-1.9M20 20.5v-5h-5"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3.5"/><path d="M12 8V4.5M9 13.5v1.5M15 13.5v1.5"/><circle cx="12" cy="3.5" r="1"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 4.2 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z"/><path d="M12 9.5v4M12 17h.01"/></symbol>
+  <symbol id="i-offline" viewBox="0 0 24 24"><path d="M3 3l18 18M8.5 16.4a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5-2.7M19 12.9a10 10 0 0 0-2.2-1.5M2 8.8a15 15 0 0 1 4.3-2.8M22 8.8A15 15 0 0 0 10.6 5M12 20h.01"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6z"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-signal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M7.8 16.2a6 6 0 0 1 0-8.4M16.2 7.8a6 6 0 0 1 0 8.4M4.9 19.1a10 10 0 0 1 0-14.2M19.1 4.9a10 10 0 0 1 0 14.2"/></symbol>
+  <symbol id="i-twitch" viewBox="0 0 24 24"><path class="fill" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0 1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></symbol>
+  <symbol id="i-mark" viewBox="0 0 32 32"><path d="M9 7v18M9 16l9-9M12 13l8 12"/></symbol>
+</svg>
+
 <div id="login" class="login" hidden>
-  <div class="card">
-    <p class="mark">Kronwerke</p>
+  <div class="login-glow" aria-hidden="true"></div>
+  <div class="login-card">
+    <span class="logo lg" aria-hidden="true"><svg class="i"><use href="#i-mark"/></svg></span>
+    <p class="eyebrow">Kronwerke</p>
     <h1>Twitch-Bot</h1>
-    <p class="mute">Kommandos, Timer und alle Chats an einem Ort.</p>
-    <a class="btn twitch" href="/auth/login">Mit Twitch anmelden</a>
+    <p class="login-lead">Commands, Timer und alle Chats der Kronwerke-Streamer an einem Ort.</p>
+    <p class="login-note" id="login-note" hidden></p>
+    <a class="btn twitch lg" href="/auth/login"><svg class="i"><use href="#i-twitch"/></svg>Mit Twitch anmelden</a>
+    <p class="login-foot">Nur für freigeschaltete Twitch-Konten.</p>
   </div>
 </div>
 
-<div id="app" class="app" hidden>
-  <header class="top">
-    <p class="brand"><span class="mark">Kronwerke</span> Twitch</p>
-    <p class="status" id="status"></p>
-    <p class="who"><span id="me"></span> <button class="ghost" id="logout" type="button">Abmelden</button></p>
+<div id="app" class="app">
+  <aside class="side" aria-label="Navigation">
+    <a class="brand" href="#overview">
+      <span class="logo" aria-hidden="true"><svg class="i"><use href="#i-mark"/></svg></span>
+      <span class="brand-text"><span class="brand-name">Kronwerke</span><span class="brand-sub">Twitch-Bot</span></span>
+    </a>
+    <nav class="nav" id="nav">
+      <span class="nav-ind" aria-hidden="true"></span>
+      <a href="#overview" data-view="overview"><svg class="i"><use href="#i-overview"/></svg><span>Übersicht</span><em class="nav-badge live" data-badge="live" hidden></em></a>
+      <a href="#chat" data-view="chat"><svg class="i"><use href="#i-chat"/></svg><span>Live-Chat</span><em class="nav-badge" data-badge="chat" hidden></em></a>
+      <a href="#channels" data-view="channels"><svg class="i"><use href="#i-channels"/></svg><span>Kanäle</span><em class="nav-badge dim" data-badge="channels" hidden></em></a>
+      <a href="#commands" data-view="commands"><svg class="i"><use href="#i-commands"/></svg><span>Commands</span><em class="nav-badge dim" data-badge="commands" hidden></em></a>
+      <a href="#timers" data-view="timers"><svg class="i"><use href="#i-timers"/></svg><span>Timer</span><em class="nav-badge dim" data-badge="timers" hidden></em></a>
+      <p class="nav-sep">Verwaltung</p>
+      <a href="#settings" data-view="settings"><svg class="i"><use href="#i-settings"/></svg><span>Einstellungen</span></a>
+      <a href="#access" data-view="access"><svg class="i"><use href="#i-access"/></svg><span>Zugänge</span></a>
+      <a href="#log" data-view="log"><svg class="i"><use href="#i-log"/></svg><span>Protokoll</span></a>
+    </nav>
+    <div class="side-foot">
+      <div class="conn" data-conn="connecting" role="status"><span class="conn-dot"></span><span class="conn-text">Verbinde</span></div>
+      <div class="me">
+        <span class="avatar sm" data-me-avatar></span>
+        <span class="me-text"><span class="me-name" data-me-name></span><span class="me-ver" data-version></span></span>
+        <button class="icon-btn" type="button" data-logout title="Abmelden" aria-label="Abmelden"><svg class="i"><use href="#i-logout"/></svg></button>
+      </div>
+    </div>
+  </aside>
+
+  <header class="mtop">
+    <a class="brand" href="#overview">
+      <span class="logo" aria-hidden="true"><svg class="i"><use href="#i-mark"/></svg></span>
+      <span class="brand-name">Kronwerke</span>
+    </a>
+    <div class="conn compact" data-conn="connecting" role="status"><span class="conn-dot"></span><span class="conn-text">Verbinde</span></div>
   </header>
-  <nav class="tabs" id="tabs">
-    <a href="#overview">Übersicht</a>
-    <a href="#chat">Live-Chat</a>
-    <a href="#channels">Kanäle</a>
-    <a href="#commands">Commands</a>
-    <a href="#timers">Timer</a>
-    <a href="#settings">Einstellungen</a>
-    <a href="#access">Zugänge</a>
-    <a href="#log">Protokoll</a>
-  </nav>
-  <main>
-    <section id="overview" class="view">
-      <div class="grid">
-        <article class="panel" id="bot-panel"></article>
-        <article class="panel" id="start-panel"></article>
-        <article class="panel wide" id="live-panel"></article>
+
+  <main class="main" id="main" tabindex="-1">
+    <div class="banner" id="banner" hidden role="status">
+      <svg class="i banner-icon"><use href="#i-offline"/></svg>
+      <span class="banner-text"></span>
+      <button class="btn sm ghost banner-btn" type="button"></button>
+    </div>
+
+    <div class="fail" id="fail" hidden>
+      <div class="fail-card">
+        <span class="fail-icon"><svg class="i"><use href="#i-offline"/></svg></span>
+        <h2>Das Dashboard ist gerade nicht erreichbar</h2>
+        <p class="fail-text">Der Server antwortet nicht. Vielleicht startet er gerade neu, zum Beispiel für ein Update.</p>
+        <p class="fail-detail"></p>
+        <button class="btn primary" type="button" id="fail-retry"><svg class="i"><use href="#i-refresh"/></svg>Erneut versuchen</button>
+        <p class="fail-auto" aria-live="polite"></p>
+      </div>
+    </div>
+
+    <!-- Übersicht -->
+    <section class="view" id="v-overview" data-view="overview" aria-labelledby="h-overview">
+      <header class="vh">
+        <div><h1 id="h-overview">Übersicht</h1><p class="vh-sub" id="ov-sub"><span class="sk sk-text w40"></span></p></div>
+      </header>
+      <div class="ov-grid">
+        <article class="card season" id="ov-season"></article>
+        <article class="card bot" id="ov-bot"></article>
+        <div class="stats" id="ov-stats"></div>
+        <article class="card live-card" id="ov-live">
+          <header class="card-h"><h2>Gerade live <span class="count-pill red" id="ov-live-count" hidden></span></h2><p class="card-meta" id="ov-live-meta"></p></header>
+          <div class="streams" id="ov-streams"></div>
+        </article>
+        <article class="card recent" id="ov-recent">
+          <header class="card-h"><h2>Zuletzt im Chat</h2><a class="link-more" href="#chat">Zum Live-Chat</a></header>
+          <ol class="mini-feed" id="ov-feed"></ol>
+        </article>
       </div>
     </section>
 
-    <section id="chat" class="view chatview">
-      <div class="chatbar">
-        <select id="chat-filter" aria-label="Kanal filtern"><option value="">Alle Kanäle</option></select>
-        <label class="check"><input type="checkbox" id="chat-pause"> Anhalten</label>
-      </div>
-      <ol class="feed" id="feed" aria-live="polite"></ol>
-      <form class="say" id="say">
-        <select id="say-channel" aria-label="Kanal" required></select>
-        <input id="say-text" maxlength="480" placeholder="Als Bot schreiben, Platzhalter wie {start} gehen auch" autocomplete="off" required>
-        <button class="btn" type="submit">Senden</button>
-      </form>
-    </section>
-
-    <section id="channels" class="view">
-      <form class="row" id="add-channel">
-        <input id="channel-login" placeholder="Twitch-Name oder Link" required autocomplete="off">
-        <input id="channel-note" placeholder="Notiz (optional)" autocomplete="off">
-        <button class="btn" type="submit">Kanal hinzufügen</button>
-      </form>
-      <div class="list" id="channel-list"></div>
-    </section>
-
-    <section id="commands" class="view">
-      <div class="split">
-        <div>
-          <p class="row"><button class="btn" id="new-command" type="button">Neuer Command</button></p>
-          <div class="list" id="command-list"></div>
+    <!-- Live-Chat -->
+    <section class="view chat-view" id="v-chat" data-view="chat" aria-labelledby="h-chat">
+      <header class="vh">
+        <div><h1 id="h-chat">Live-Chat</h1><p class="vh-sub" id="chat-sub">Alle Chats in einem Feed.</p></div>
+        <div class="vh-actions">
+          <button class="btn ghost" type="button" id="chat-pause" aria-pressed="false"><svg class="i"><use href="#i-pause"/></svg><span>Anhalten</span></button>
         </div>
-        <form class="panel editor" id="command-form" hidden>
-          <h2 id="command-title">Command</h2>
-          <label>Name<span class="prefix"><span>!</span><input name="name" required pattern="[a-zA-Z0-9_äöüÄÖÜ]{1,30}" autocomplete="off"></span></label>
-          <label>Weitere Namen <small>mit Komma getrennt</small><input name="aliases" autocomplete="off"></label>
-          <label>Antwort<textarea name="response" rows="4" maxlength="480" required></textarea></label>
-          <p class="preview" id="command-preview"></p>
-          <div class="cols">
-            <label>Abklingzeit in Sekunden<input name="cooldown" type="number" min="0" max="3600" value="30"></label>
-            <label>Nur in Kanälen<select name="channels" multiple size="4"></select><small>Nichts gewählt heisst überall</small></label>
-          </div>
-          <label class="check"><input type="checkbox" name="enabled" checked> Aktiv</label>
-          <label class="check"><input type="checkbox" name="mod_only"> Nur Mods und Streamer</label>
-          <p class="actions"><button class="btn" type="submit">Speichern</button> <button class="ghost" type="button" id="command-cancel">Abbrechen</button> <button class="danger" type="button" id="command-delete">Löschen</button></p>
-          <details class="help"><summary>Platzhalter</summary><dl id="placeholders"></dl></details>
-        </form>
-      </div>
-    </section>
-
-    <section id="timers" class="view">
-      <div class="split">
-        <div>
-          <p class="row"><button class="btn" id="new-timer" type="button">Neuer Timer</button></p>
-          <div class="list" id="timer-list"></div>
+      </header>
+      <div class="chips-row" id="chat-filter" role="toolbar" aria-label="Nach Kanal filtern"></div>
+      <div class="feed-wrap">
+        <ol class="feed" id="feed" aria-live="off"></ol>
+        <div class="feed-empty" id="feed-empty" hidden>
+          <span class="empty-icon"><svg class="i"><use href="#i-chat"/></svg></span>
+          <p class="empty-title">Noch ist es still</p>
+          <p class="empty-text">Sobald in einem der Chats etwas geschrieben wird, steht es hier.</p>
         </div>
-        <form class="panel editor" id="timer-form" hidden>
-          <h2>Timer</h2>
-          <label>Name<input name="name" required autocomplete="off"></label>
-          <label>Text<textarea name="text" rows="4" maxlength="480" required></textarea></label>
-          <p class="preview" id="timer-preview"></p>
-          <div class="cols">
-            <label>Alle wie viele Minuten<input name="minutes" type="number" min="5" value="30"></label>
-            <label>Mindestens so viele Chatzeilen dazwischen<input name="min_lines" type="number" min="0" value="15"></label>
+        <button class="pill-new" id="pill-new" type="button" hidden><svg class="i"><use href="#i-down"/></svg><span></span></button>
+        <div class="paused-bar" id="paused-bar" hidden><span><svg class="i"><use href="#i-pause"/></svg><span class="paused-text">Angehalten</span></span><button class="btn sm primary" type="button" id="paused-resume"><svg class="i"><use href="#i-play"/></svg>Fortsetzen</button></div>
+      </div>
+      <form class="composer" id="say" autocomplete="off">
+        <div class="select-wrap"><select id="say-channel" aria-label="In welchen Kanal"></select><svg class="i"><use href="#i-chevron"/></svg></div>
+        <input id="say-text" maxlength="480" aria-label="Nachricht" placeholder="Als Bot schreiben" enterkeyhint="send">
+        <span class="say-count" id="say-count" hidden></span>
+        <button class="btn primary send" type="submit" aria-label="Senden"><svg class="i"><use href="#i-send"/></svg><span>Senden</span></button>
+      </form>
+    </section>
+
+    <!-- Kanäle -->
+    <section class="view" id="v-channels" data-view="channels" aria-labelledby="h-channels">
+      <header class="vh">
+        <div><h1 id="h-channels">Kanäle</h1><p class="vh-sub">In diesen Chats sitzt der Bot. Auf der Website erscheint, wer live ist und dort gezeigt werden soll.</p></div>
+      </header>
+      <form class="card add-row" id="add-channel" autocomplete="off">
+        <div class="field grow"><label for="channel-login">Twitch-Name oder Link</label><input id="channel-login" placeholder="zum Beispiel twitch.tv/carla" spellcheck="false" autocapitalize="off"></div>
+        <div class="field grow"><label for="channel-note">Notiz <span class="opt">optional</span></label><input id="channel-note" placeholder="wofür oder von wem"></div>
+        <button class="btn primary" type="submit"><svg class="i"><use href="#i-plus"/></svg>Hinzufügen</button>
+      </form>
+      <div class="stack" id="channel-list"></div>
+    </section>
+
+    <!-- Commands -->
+    <section class="view" id="v-commands" data-view="commands" aria-labelledby="h-commands">
+      <header class="vh">
+        <div><h1 id="h-commands">Commands</h1><p class="vh-sub">Antworten auf !Befehle im Chat. Jede Änderung gilt sofort, ohne Neustart.</p></div>
+        <div class="vh-actions"><button class="btn primary" type="button" id="cmd-new"><svg class="i"><use href="#i-plus"/></svg>Neuer Command</button></div>
+      </header>
+      <div class="split" id="cmd-split">
+        <div class="split-list">
+          <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="cmd-search" type="search" placeholder="Commands durchsuchen" aria-label="Commands durchsuchen"></label>
+          <div class="stack" id="cmd-list"></div>
+        </div>
+        <div class="split-side">
+          <div class="ed-empty card" id="cmd-empty">
+            <span class="empty-icon"><svg class="i"><use href="#i-commands"/></svg></span>
+            <p class="empty-title">Wähle einen Command</p>
+            <p class="empty-text">oder lege einen neuen an. Diese Platzhalter kannst du in Antworten benutzen:</p>
+            <dl class="ph-list" data-ph-list></dl>
           </div>
-          <label>Nur in Kanälen<select name="channels" multiple size="4"></select><small>Nichts gewählt heisst überall</small></label>
-          <label class="check"><input type="checkbox" name="enabled" checked> Aktiv</label>
-          <label class="check"><input type="checkbox" name="live_only" checked> Nur wenn der Kanal live ist</label>
-          <p class="actions"><button class="btn" type="submit">Speichern</button> <button class="ghost" type="button" id="timer-cancel">Abbrechen</button> <button class="danger" type="button" id="timer-delete">Löschen</button></p>
-        </form>
+          <form class="editor card" id="cmd-form" novalidate hidden>
+            <div class="ed-head">
+              <button class="icon-btn ed-x" type="button" data-close aria-label="Schließen"><svg class="i"><use href="#i-x"/></svg></button>
+              <div class="ed-titles"><p class="eyebrow" data-eyebrow>Command</p><h2 data-title>Neuer Command</h2></div>
+              <span class="dirty" data-dirty hidden>Nicht gespeichert</span>
+            </div>
+            <div class="ed-body">
+              <p class="ed-gone" data-gone hidden>Jemand anderes hat diesen Command gerade gelöscht. Speichern legt ihn neu an.</p>
+              <div class="field">
+                <label for="cmd-name">Name</label>
+                <div class="affix"><span>!</span><input id="cmd-name" name="name" maxlength="30" spellcheck="false" autocapitalize="off" placeholder="start"></div>
+                <p class="f-err" data-err="name"></p>
+              </div>
+              <div class="field">
+                <label for="cmd-alias-input">Weitere Namen <span class="opt">optional</span></label>
+                <div class="chip-input" data-chips="aliases"><input id="cmd-alias-input" placeholder="Alias und Enter" spellcheck="false" autocapitalize="off"></div>
+                <p class="hint">Reagiert genauso, zum Beispiel !wann für !start.</p>
+              </div>
+              <div class="field">
+                <label for="cmd-response">Antwort</label>
+                <textarea id="cmd-response" name="response" rows="4" maxlength="480" placeholder="Season 2 startet am {start}, {countdown}."></textarea>
+                <div class="ta-foot"><div class="ph-chips" data-ph-for="cmd-response"></div><span class="count" data-count>0/480</span></div>
+                <p class="f-err" data-err="response"></p>
+              </div>
+              <div class="preview" data-preview>
+                <p class="preview-label">Vorschau <span data-preview-where></span></p>
+                <div class="bubble"><span class="bubble-name" data-bot-name>KronwerkeBot</span><span class="bubble-text" data-preview-text></span></div>
+              </div>
+              <div class="field narrow">
+                <label for="cmd-cooldown">Abklingzeit</label>
+                <div class="affix right"><input id="cmd-cooldown" name="cooldown" type="number" min="0" max="3600" inputmode="numeric"><span>Sekunden</span></div>
+                <p class="hint">So lange antwortet der Command im selben Kanal nicht noch einmal. Mods und Streamer sind ausgenommen.</p>
+              </div>
+              <div class="field">
+                <span class="label">Kanäle</span>
+                <div class="chan-pick" data-chan-pick></div>
+                <p class="hint">Ohne Auswahl gilt der Command in allen Kanälen.</p>
+              </div>
+              <div class="sw-group">
+                <label class="sw-row"><span class="sw-text"><b>Aktiv</b><small>Der Bot antwortet auf diesen Command.</small></span><span class="sw"><input type="checkbox" name="enabled" role="switch"><i></i></span></label>
+                <label class="sw-row"><span class="sw-text"><b>Nur Mods und Streamer</b><small>Für alle anderen bleibt der Bot still.</small></span><span class="sw"><input type="checkbox" name="mod_only" role="switch"><i></i></span></label>
+              </div>
+              <details class="ph-help"><summary>Was die Platzhalter einsetzen</summary><dl class="ph-list" data-ph-list></dl></details>
+              <p class="form-err" data-form-err hidden></p>
+            </div>
+            <div class="ed-foot">
+              <button class="btn danger-ghost" type="button" data-delete><svg class="i"><use href="#i-trash"/></svg><span>Löschen</span></button>
+              <span class="grow"></span>
+              <button class="btn ghost" type="button" data-close>Abbrechen</button>
+              <button class="btn primary" type="submit" data-save>Speichern</button>
+            </div>
+          </form>
+        </div>
       </div>
     </section>
 
-    <section id="settings" class="view">
-      <form class="panel narrow" id="settings-form">
-        <h2>Was die Platzhalter einsetzen</h2>
-        <label>Start der Season <small>Ortszeit, als 2027-01-16T18:00</small><input name="start" required></label>
-        <label>Discord-Einladung <small>{discord}</small><input name="discord" type="url"></label>
-        <label>Website <small>{website}</small><input name="website" type="url"></label>
-        <label>Serveradresse <small>{server}</small><input name="server"></label>
-        <p class="actions"><button class="btn" type="submit">Speichern</button></p>
-      </form>
+    <!-- Timer -->
+    <section class="view" id="v-timers" data-view="timers" aria-labelledby="h-timers">
+      <header class="vh">
+        <div><h1 id="h-timers">Timer</h1><p class="vh-sub">Texte, die der Bot regelmäßig in die Chats schreibt, wenn genug los ist.</p></div>
+        <div class="vh-actions"><button class="btn primary" type="button" id="tmr-new"><svg class="i"><use href="#i-plus"/></svg>Neuer Timer</button></div>
+      </header>
+      <div class="split" id="tmr-split">
+        <div class="split-list">
+          <div class="stack" id="tmr-list"></div>
+        </div>
+        <div class="split-side">
+          <div class="ed-empty card" id="tmr-empty">
+            <span class="empty-icon"><svg class="i"><use href="#i-timers"/></svg></span>
+            <p class="empty-title">Wähle einen Timer</p>
+            <p class="empty-text">oder lege einen neuen an. Ein Timer schreibt nur, wenn seit dem letzten Mal genug im Chat los war, und auf Wunsch nur, solange der Kanal live ist.</p>
+          </div>
+          <form class="editor card" id="tmr-form" novalidate hidden>
+            <div class="ed-head">
+              <button class="icon-btn ed-x" type="button" data-close aria-label="Schließen"><svg class="i"><use href="#i-x"/></svg></button>
+              <div class="ed-titles"><p class="eyebrow" data-eyebrow>Timer</p><h2 data-title>Neuer Timer</h2></div>
+              <span class="dirty" data-dirty hidden>Nicht gespeichert</span>
+            </div>
+            <div class="ed-body">
+              <p class="ed-gone" data-gone hidden>Jemand anderes hat diesen Timer gerade gelöscht. Speichern legt ihn neu an.</p>
+              <div class="field">
+                <label for="tmr-name">Name</label>
+                <input id="tmr-name" name="name" maxlength="60" placeholder="Start und Discord">
+                <p class="f-err" data-err="name"></p>
+              </div>
+              <div class="field">
+                <label for="tmr-text">Text</label>
+                <textarea id="tmr-text" name="text" rows="4" maxlength="480" placeholder="Kronwerke Season 2 startet am {start}. Mitspielen: {discord}"></textarea>
+                <div class="ta-foot"><div class="ph-chips" data-ph-for="tmr-text"></div><span class="count" data-count>0/480</span></div>
+                <p class="f-err" data-err="text"></p>
+              </div>
+              <div class="preview" data-preview>
+                <p class="preview-label">Vorschau <span data-preview-where></span></p>
+                <div class="bubble"><span class="bubble-name" data-bot-name>KronwerkeBot</span><span class="bubble-text" data-preview-text></span></div>
+              </div>
+              <div class="grid2">
+                <div class="field">
+                  <label for="tmr-minutes">Wie oft</label>
+                  <div class="affix right"><span class="pre">alle</span><input id="tmr-minutes" name="minutes" type="number" min="5" inputmode="numeric"><span>Minuten</span></div>
+                  <p class="f-err" data-err="minutes"></p>
+                </div>
+                <div class="field">
+                  <label for="tmr-lines">Mindestens dazwischen</label>
+                  <div class="affix right"><input id="tmr-lines" name="min_lines" type="number" min="0" inputmode="numeric"><span>Chatzeilen</span></div>
+                </div>
+              </div>
+              <div class="field">
+                <span class="label">Kanäle</span>
+                <div class="chan-pick" data-chan-pick></div>
+                <p class="hint">Ohne Auswahl läuft der Timer in allen Kanälen.</p>
+              </div>
+              <div class="sw-group">
+                <label class="sw-row"><span class="sw-text"><b>Aktiv</b><small>Der Timer schreibt in die Chats.</small></span><span class="sw"><input type="checkbox" name="enabled" role="switch"><i></i></span></label>
+                <label class="sw-row"><span class="sw-text"><b>Nur wenn der Kanal live ist</b><small>Offline bleibt der Chat ruhig.</small></span><span class="sw"><input type="checkbox" name="live_only" role="switch"><i></i></span></label>
+              </div>
+              <details class="ph-help"><summary>Was die Platzhalter einsetzen</summary><dl class="ph-list" data-ph-list></dl></details>
+              <p class="form-err" data-form-err hidden></p>
+            </div>
+            <div class="ed-foot">
+              <button class="btn danger-ghost" type="button" data-delete><svg class="i"><use href="#i-trash"/></svg><span>Löschen</span></button>
+              <span class="grow"></span>
+              <button class="btn ghost" type="button" data-close>Abbrechen</button>
+              <button class="btn primary" type="submit" data-save>Speichern</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </section>
 
-    <section id="access" class="view">
-      <form class="row" id="add-user">
-        <input id="user-login" placeholder="Twitch-Name" required autocomplete="off">
-        <button class="btn" type="submit">Zugang geben</button>
-      </form>
-      <p class="mute">Ein neuer Zugang wird bei der ersten Anmeldung an die Twitch-ID gebunden. Wer danach seinen Namen ändert, behält den Zugang; ein anderes Konto mit dem alten Namen bekommt ihn nicht.</p>
-      <div class="list" id="user-list"></div>
+    <!-- Einstellungen -->
+    <section class="view" id="v-settings" data-view="settings" aria-labelledby="h-settings">
+      <header class="vh">
+        <div><h1 id="h-settings">Einstellungen</h1><p class="vh-sub">Was die Platzhalter in Commands und Timern einsetzen.</p></div>
+      </header>
+      <div class="settings-grid">
+        <form class="card form-card" id="settings-form" novalidate autocomplete="off">
+          <div class="field">
+            <label for="set-start">Start der Season <code class="token">{start}</code></label>
+            <input id="set-start" name="start" type="datetime-local">
+            <p class="hint" id="set-start-hint">Uhrzeit in Berlin.</p>
+            <p class="f-err" data-err="start"></p>
+          </div>
+          <div class="field">
+            <label for="set-discord">Discord-Einladung <code class="token">{discord}</code></label>
+            <input id="set-discord" name="discord" type="url" inputmode="url" spellcheck="false" placeholder="https://discord.gg/...">
+          </div>
+          <div class="field">
+            <label for="set-website">Website <code class="token">{website}</code></label>
+            <input id="set-website" name="website" type="url" inputmode="url" spellcheck="false" placeholder="https://kronwerke.com">
+          </div>
+          <div class="field">
+            <label for="set-server">Serveradresse <code class="token">{server}</code></label>
+            <input id="set-server" name="server" spellcheck="false" placeholder="kronwerke.net">
+          </div>
+          <div class="savebar" id="settings-bar" hidden>
+            <span>Du hast ungespeicherte Änderungen.</span>
+            <span class="grow"></span>
+            <button class="btn ghost sm" type="button" id="settings-reset">Verwerfen</button>
+            <button class="btn primary sm" type="submit">Speichern</button>
+          </div>
+        </form>
+        <article class="card sys-card" id="sys"></article>
+      </div>
     </section>
 
-    <section id="log" class="view">
-      <ol class="log" id="log-list"></ol>
+    <!-- Zugänge -->
+    <section class="view" id="v-access" data-view="access" aria-labelledby="h-access">
+      <header class="vh">
+        <div><h1 id="h-access">Zugänge</h1><p class="vh-sub">Diese Twitch-Konten dürfen ins Dashboard.</p></div>
+      </header>
+      <form class="card add-row" id="add-user" autocomplete="off">
+        <div class="field grow"><label for="user-login">Twitch-Name</label><input id="user-login" placeholder="zum Beispiel carla" spellcheck="false" autocapitalize="off"></div>
+        <button class="btn primary" type="submit"><svg class="i"><use href="#i-plus"/></svg>Zugang geben</button>
+      </form>
+      <div class="stack" id="user-list"></div>
+      <p class="footnote">Ein neuer Zugang wird bei der ersten Anmeldung an die Twitch-ID gebunden. Wer danach den Namen ändert, behält den Zugang. Ein anderes Konto, das sich später den alten Namen nimmt, bekommt ihn nicht.</p>
+    </section>
+
+    <!-- Protokoll -->
+    <section class="view" id="v-log" data-view="log" aria-labelledby="h-log">
+      <header class="vh">
+        <div><h1 id="h-log">Protokoll</h1><p class="vh-sub">Was der Bot zuletzt getan hat, das Neueste oben.</p></div>
+        <div class="vh-actions"><button class="btn ghost" type="button" id="log-refresh"><svg class="i"><use href="#i-refresh"/></svg>Aktualisieren</button></div>
+      </header>
+      <label class="search"><svg class="i"><use href="#i-search"/></svg><input id="log-search" type="search" placeholder="Im Protokoll suchen" aria-label="Im Protokoll suchen"></label>
+      <div class="card log-card"><ol class="log" id="log-list"></ol></div>
     </section>
   </main>
+
+  <nav class="tabbar" id="tabbar" aria-label="Navigation">
+    <a href="#overview" data-view="overview"><svg class="i"><use href="#i-overview"/></svg><span>Übersicht</span><em class="nav-badge live" data-badge="live" hidden></em></a>
+    <a href="#chat" data-view="chat"><svg class="i"><use href="#i-chat"/></svg><span>Chat</span><em class="nav-badge" data-badge="chat" hidden></em></a>
+    <a href="#channels" data-view="channels"><svg class="i"><use href="#i-channels"/></svg><span>Kanäle</span></a>
+    <a href="#commands" data-view="commands"><svg class="i"><use href="#i-commands"/></svg><span>Commands</span></a>
+    <button type="button" id="more-btn" data-more aria-haspopup="dialog"><svg class="i"><use href="#i-more"/></svg><span>Mehr</span></button>
+  </nav>
 </div>
-<div class="toast" id="toast" role="status" hidden></div>
+
+<div class="sheet" id="more-sheet" hidden>
+  <div class="sheet-scrim" data-sheet-close></div>
+  <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Mehr">
+    <span class="sheet-grip" aria-hidden="true"></span>
+    <nav class="sheet-nav">
+      <a href="#timers" data-view="timers"><svg class="i"><use href="#i-timers"/></svg><span>Timer</span></a>
+      <a href="#settings" data-view="settings"><svg class="i"><use href="#i-settings"/></svg><span>Einstellungen</span></a>
+      <a href="#access" data-view="access"><svg class="i"><use href="#i-access"/></svg><span>Zugänge</span></a>
+      <a href="#log" data-view="log"><svg class="i"><use href="#i-log"/></svg><span>Protokoll</span></a>
+    </nav>
+    <div class="me sheet-me">
+      <span class="avatar sm" data-me-avatar></span>
+      <span class="me-text"><span class="me-name" data-me-name></span><span class="me-ver" data-version></span></span>
+      <button class="btn ghost sm" type="button" data-logout><svg class="i"><use href="#i-logout"/></svg>Abmelden</button>
+    </div>
+  </div>
+</div>
+
+<dialog class="modal" id="modal" aria-labelledby="modal-title">
+  <form method="dialog" class="modal-card">
+    <span class="modal-icon"><svg class="i"><use href="#i-alert"/></svg></span>
+    <h2 id="modal-title"></h2>
+    <p class="modal-text"></p>
+    <div class="modal-actions">
+      <button class="btn ghost" value="cancel" data-cancel>Abbrechen</button>
+      <button class="btn primary" value="ok" data-ok>OK</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
 </body>
 </html>

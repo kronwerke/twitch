@@ -64,6 +64,7 @@ type App struct {
 	ircState atomic.Pointer[string]
 	events   eventLog
 	restart  chan string
+	ssePing  time.Duration // how often the live stream says it is alive, 25 s when zero
 }
 
 type timerState struct {

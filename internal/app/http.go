@@ -62,6 +62,9 @@ func (a *App) routes() http.Handler {
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' https://static-cdn.jtvnw.net data:; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'; form-action 'self' https://id.twitch.tv")
 		w.Header().Set("Referrer-Policy", "same-origin")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
+		if strings.HasPrefix(r.URL.Path, "/fonts/") {
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		}
 		files.ServeHTTP(w, r)
 	}))
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok\n")) })
@@ -329,16 +332,22 @@ func (a *App) apiEvents(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Accel-Buffering", "no")
 	sub := a.hub.subscribe()
 	defer a.hub.unsubscribe(sub)
-	ping := time.NewTicker(25 * time.Second)
+	every := a.ssePing
+	if every <= 0 {
+		every = 25 * time.Second
+	}
+	ping := time.NewTicker(every)
 	defer ping.Stop()
-	fmt.Fprint(w, ": hello\n\n")
+	fmt.Fprint(w, "retry: 2000\n: hello\n\n")
 	fl.Flush()
 	for {
 		select {
 		case <-r.Context().Done():
 			return
 		case <-ping.C:
-			fmt.Fprint(w, ": ping\n\n")
+			// a named event: the dashboard sees it and knows the line is alive, while
+			// clients that only listen to plain messages are not bothered
+			fmt.Fprint(w, "event: ping\ndata: {}\n\n")
 			fl.Flush()
 		case e := <-sub:
 			b, _ := json.Marshal(e)
@@ -719,8 +728,12 @@ func page(w http.ResponseWriter, status int, msg string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(status)
 	fmt.Fprintf(w, `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kronwerke Twitch</title>
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0d0b10;color:#f2ede3;font:16px/1.5 system-ui,sans-serif}main{max-width:28rem;padding:2rem}a{color:#e5b451}</style>
-<main><p>%s</p><p><a href="/">Zurück</a></p></main>`, htmlEscape(msg))
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>@font-face{font-family:"Schibsted Grotesk";src:url("/fonts/schibsted-grotesk-latin-wght-normal.woff2") format("woff2");font-weight:400 900}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(600px 380px at 50%% 18%%,rgba(229,180,81,.12),transparent 70%%),#0d0b10;color:#f2ede3;font:15px/1.55 "Schibsted Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:24rem;margin:1.5rem;padding:2.5rem 2rem 2rem;border-radius:22px;background:linear-gradient(180deg,rgba(34,29,39,.75),rgba(23,20,27,.9));border:1px solid rgba(242,237,227,.08);text-align:center}
+p{margin:0 0 1.5rem;color:#aaa39b}a{display:inline-flex;align-items:center;height:42px;padding:0 18px;border-radius:10px;background:#e5b451;color:#1d1508;font-weight:650;text-decoration:none}a:hover{background:#f0c66c}</style>
+<main><p>%s</p><a href="/">Zurück zum Dashboard</a></main>`, htmlEscape(msg))
 }
 
 func htmlEscape(s string) string {
