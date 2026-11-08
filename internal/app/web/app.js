@@ -83,8 +83,16 @@ async function boot() {
   route();
 }
 
+function normalize(s) {
+  for (const k of ["channels", "commands", "timers", "users"]) s[k] = s[k] || [];
+  s.chat = s.chat || { connected: false, joined: [] };
+  s.chat.joined = s.chat.joined || [];
+  s.settings = s.settings || {};
+  return s;
+}
+
 async function refresh() {
-  state = await api("GET", "/api/overview");
+  state = normalize(await api("GET", "/api/overview"));
   render();
 }
 
@@ -94,7 +102,7 @@ function stream() {
     const ev = JSON.parse(e.data);
     if (ev.kind === "message") addLine(ev.message);
     if (ev.kind === "state") {
-      state = ev.state;
+      state = normalize(ev.state);
       render();
     }
   };

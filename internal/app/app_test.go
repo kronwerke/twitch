@@ -310,3 +310,13 @@ func TestSignedOutAPIIsClosed(t *testing.T) {
 		t.Errorf("wrong token: %d", r.StatusCode)
 	}
 }
+
+func TestOverviewHasNoNullLists(t *testing.T) {
+	a, _, _ := newTestApp(t)
+	b, _ := json.Marshal(a.overview())
+	for _, k := range []string{`"channels":null`, `"commands":null`, `"timers":null`, `"users":null`, `"joined":null`} {
+		if strings.Contains(string(b), k) {
+			t.Errorf("%s in %s", k, b)
+		}
+	}
+}

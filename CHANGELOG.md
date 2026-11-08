@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- The dashboard stayed empty, without the button to connect the bot, as long as no channel was added: the overview sent an empty list as null.
+
 ## 0.1.0
 
 First version.

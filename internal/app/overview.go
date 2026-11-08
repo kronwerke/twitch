@@ -56,13 +56,14 @@ type ChannelView struct {
 }
 
 func (a *App) overview() *Overview {
-	o := &Overview{Version: a.cfg.Version, Started: a.started, Configured: a.tw.Configured(), Callback: a.callbackURL()}
+	o := &Overview{Version: a.cfg.Version, Started: a.started, Configured: a.tw.Configured(), Callback: a.callbackURL(),
+		Channels: []ChannelView{}, Commands: []store.Command{}, Timers: []store.Timer{}, Users: []store.User{}}
 	joined := map[string]bool{}
 	for _, l := range a.chat.Joined() {
 		joined[l] = true
 	}
 	connected, _ := a.chat.Connected()
-	o.Chat = ChatView{Connected: connected, Joined: a.chat.Joined()}
+	o.Chat = ChatView{Connected: connected, Joined: append([]string{}, a.chat.Joined()...)}
 	if s := a.ircState.Load(); s != nil {
 		o.Chat.Detail = *s
 	}
