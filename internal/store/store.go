@@ -23,8 +23,26 @@ type User struct {
 	ID       string    `json:"id,omitempty"`
 	Name     string    `json:"name,omitempty"`
 	Owner    bool      `json:"owner,omitempty"`
+	Role     string    `json:"role,omitempty"` // RoleEditor (also when empty) or RoleViewer; the owner is Owner
 	Added    time.Time `json:"added"`
 	LastSeen time.Time `json:"last_seen,omitempty"`
+}
+
+// Roles of dashboard users besides the owner.
+const (
+	RoleEditor = "editor" // commands, timers, channels, writing in chat
+	RoleViewer = "viewer" // reads everything, changes nothing
+)
+
+// Level is the user's role: "owner", RoleEditor or RoleViewer.
+func (u User) Level() string {
+	switch {
+	case u.Owner:
+		return "owner"
+	case u.Role == RoleViewer:
+		return RoleViewer
+	}
+	return RoleEditor
 }
 
 // Bot is the Twitch account the bot chats as.

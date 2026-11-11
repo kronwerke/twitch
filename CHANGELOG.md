@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- Roles. The owner keeps everything; editors change commands, timers and channels and write in chat; viewers only look. Settings, access and the bot account are the owner's. The owner switches a user between editor and viewer on the access page; every change is in the log.
+- `{args}` is cleaned before the bot repeats it: no links, no leading `/`, `.` or `!`, at most 60 characters. A command whose text starts using `{args}` is set to moderators only (the owner can open it again).
+- The season start follows the server: without a start set here, the bot reads it from kronwerke.com's status (Kronwerke Core's `seasonStart`), every ten minutes. The old fixed seed is cleared once. The setting `lang` = `en` writes `{start}` and `{countdown}` in English.
+- Updates install only releases whose SHA256SUMS carries the release key's signature (`SHA256SUMS.sig`, Ed25519, pinned in the binary).
+
 ## 0.2.0
 
 A new dashboard. Same features, built again so it loads every time and feels calm to use.

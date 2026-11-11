@@ -98,7 +98,7 @@ func (a *App) overview() *Overview {
 	})
 	sort.Slice(o.Commands, func(i, j int) bool { return o.Commands[i].Name < o.Commands[j].Name })
 	start := a.start()
-	o.Start, o.Countdown = germanDate(start), countdown(time.Now(), start)
+	o.Start, o.Countdown = a.date(start), a.countdown(start)
 	return o
 }
 

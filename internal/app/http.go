@@ -35,6 +35,18 @@ type actor struct {
 	Login, ID string
 	API       bool
 	CSRF      string
+	Role      string // "owner", store.RoleEditor or store.RoleViewer; the API token is owner
+}
+
+// may says whether the actor's role covers a level: "view", "edit" or "owner".
+func (act actor) may(level string) bool {
+	switch level {
+	case "owner":
+		return act.API || act.Role == "owner"
+	case "edit":
+		return act.API || act.Role == "owner" || act.Role == store.RoleEditor
+	}
+	return true
 }
 
 type actorKey struct{}
@@ -74,9 +86,31 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("GET /auth/login", a.authLogin)
 	mux.HandleFunc("GET /auth/callback", a.authCallback)
 	mux.HandleFunc("POST /auth/logout", a.authLogout)
-	mux.Handle("GET /auth/bot", a.signedIn(http.HandlerFunc(a.authBot)))
 
-	api := func(pattern string, h http.HandlerFunc) { mux.Handle(pattern, a.signedIn(h)) }
+	// every signed in user reads; editors change commands, timers, channels and write in
+	// chat; settings, access and the bot account are the owner's
+	needs := func(level string, h http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			if act := r.Context().Value(actorKey{}).(actor); !act.may(level) {
+				msg := "Dein Zugang ist nur zum Ansehen."
+				if level == "owner" {
+					msg = "Das darf nur der Besitzer."
+				}
+				writeErr(w, http.StatusForbidden, msg)
+				return
+			}
+			h(w, r)
+		}
+	}
+	api := func(pattern string, h http.HandlerFunc) {
+		level := "view"
+		if !strings.HasPrefix(pattern, "GET ") {
+			level = "edit"
+		}
+		mux.Handle(pattern, a.signedIn(needs(level, h)))
+	}
+	owner := func(pattern string, h http.HandlerFunc) { mux.Handle(pattern, a.signedIn(needs("owner", h))) }
+	owner("GET /auth/bot", a.authBot)
 	api("GET /api/me", a.apiMe)
 	api("GET /api/overview", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, 200, a.overview()) })
 	api("GET /api/log", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, 200, a.events.last(200)) })
@@ -90,10 +124,11 @@ func (a *App) routes() http.Handler {
 	api("DELETE /api/commands/{name}", a.apiDeleteCommand)
 	api("PUT /api/timers/{id}", a.apiPutTimer)
 	api("DELETE /api/timers/{id}", a.apiDeleteTimer)
-	api("PATCH /api/settings", a.apiSettings)
-	api("POST /api/users", a.apiAddUser)
-	api("DELETE /api/users/{login}", a.apiDeleteUser)
-	api("DELETE /api/bot", a.apiDropBot)
+	owner("PATCH /api/settings", a.apiSettings)
+	owner("POST /api/users", a.apiAddUser)
+	owner("PATCH /api/users/{login}", a.apiUserRole)
+	owner("DELETE /api/users/{login}", a.apiDeleteUser)
+	owner("DELETE /api/bot", a.apiDropBot)
 	api("POST /api/preview", a.apiPreview)
 	return mux
 }
@@ -235,7 +270,7 @@ func (a *App) signedIn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if h := r.Header.Get("Authorization"); strings.HasPrefix(h, "Bearer ") && a.cfg.AdminToken != "" {
 			if subtle.ConstantTimeCompare([]byte(strings.TrimPrefix(h, "Bearer ")), []byte(a.cfg.AdminToken)) == 1 {
-				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), actorKey{}, actor{Login: "api", API: true})))
+				next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), actorKey{}, actor{Login: "api", API: true, Role: "owner"})))
 				return
 			}
 			writeErr(w, http.StatusUnauthorized, "falsches Token")
@@ -244,6 +279,7 @@ func (a *App) signedIn(next http.Handler) http.Handler {
 		c, err := r.Cookie(sessionCookie)
 		var s store.Session
 		ok := false
+		role := store.RoleViewer
 		if err == nil {
 			a.store.View(func(d *store.Data) {
 				s, ok = d.Sessions[store.Hash(c.Value)]
@@ -253,6 +289,7 @@ func (a *App) signedIn(next http.Handler) http.Handler {
 					for _, u := range d.Users {
 						if u.ID == s.UserID {
 							found = true
+							role = u.Level()
 						}
 					}
 					ok = found
@@ -269,7 +306,7 @@ func (a *App) signedIn(next http.Handler) http.Handler {
 				return
 			}
 		}
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), actorKey{}, actor{Login: s.Login, ID: s.UserID, CSRF: s.CSRF})))
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), actorKey{}, actor{Login: s.Login, ID: s.UserID, CSRF: s.CSRF, Role: role})))
 	})
 }
 
@@ -277,7 +314,7 @@ func (a *App) signedIn(next http.Handler) http.Handler {
 
 func (a *App) apiMe(w http.ResponseWriter, r *http.Request) {
 	act := r.Context().Value(actorKey{}).(actor)
-	writeJSON(w, 200, map[string]any{"login": act.Login, "csrf": act.CSRF, "api": act.API})
+	writeJSON(w, 200, map[string]any{"login": act.Login, "csrf": act.CSRF, "api": act.API, "role": act.Role})
 }
 
 func (a *App) apiLive(w http.ResponseWriter, r *http.Request) {
@@ -291,7 +328,7 @@ func (a *App) apiLive(w http.ResponseWriter, r *http.Request) {
 	a.liveMu.RLock()
 	at := a.liveAt
 	a.liveMu.RUnlock()
-	writeJSON(w, 200, map[string]any{"live": a.liveNow(), "checked": at, "start": a.start(), "countdown": countdown(time.Now(), a.start())})
+	writeJSON(w, 200, map[string]any{"live": a.liveNow(), "checked": at, "start": a.start(), "countdown": a.countdown(a.start())})
 }
 
 func (a *App) apiChat(w http.ResponseWriter, r *http.Request) {
@@ -506,10 +543,17 @@ func (a *App) apiPutCommand(w http.ResponseWriter, r *http.Request) {
 		}
 		for i := range d.Commands {
 			if d.Commands[i].Name == old {
+				// a text that starts repeating what viewers type is for moderators first
+				if strings.Contains(c.Response, "{args}") && !strings.Contains(d.Commands[i].Response, "{args}") {
+					c.ModOnly = true
+				}
 				c.Uses = d.Commands[i].Uses
 				d.Commands[i] = c
 				return nil
 			}
+		}
+		if strings.Contains(c.Response, "{args}") {
+			c.ModOnly = true
 		}
 		d.Commands = append(d.Commands, c)
 		return nil
@@ -623,6 +667,7 @@ func (a *App) apiSettings(w http.ResponseWriter, r *http.Request) {
 func (a *App) apiAddUser(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Login string `json:"login"`
+		Role  string `json:"role"`
 	}
 	if !readJSON(w, r, &in) {
 		return
@@ -632,20 +677,57 @@ func (a *App) apiAddUser(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, "das ist kein Twitch-Name")
 		return
 	}
+	role := store.RoleEditor
+	if in.Role == store.RoleViewer {
+		role = store.RoleViewer
+	}
 	err := a.store.Update(func(d *store.Data) error {
 		for _, u := range d.Users {
 			if u.Login == login {
 				return errors.New("hat schon Zugang")
 			}
 		}
-		d.Users = append(d.Users, store.User{Login: login, Added: time.Now()})
+		d.Users = append(d.Users, store.User{Login: login, Role: role, Added: time.Now()})
 		return nil
 	})
 	if err != nil {
 		writeErr(w, 409, err.Error())
 		return
 	}
-	a.changed(r, "access for %s", login)
+	a.changed(r, "access for %s as %s", login, role)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// apiUserRole sets a user to editor or viewer.
+func (a *App) apiUserRole(w http.ResponseWriter, r *http.Request) {
+	login := store.Lower(r.PathValue("login"))
+	var in struct {
+		Role string `json:"role"`
+	}
+	if !readJSON(w, r, &in) {
+		return
+	}
+	if in.Role != store.RoleEditor && in.Role != store.RoleViewer {
+		writeErr(w, 400, "editor oder viewer")
+		return
+	}
+	err := a.store.Update(func(d *store.Data) error {
+		for i := range d.Users {
+			if d.Users[i].Login == login {
+				if d.Users[i].Owner {
+					return errors.New("der Besitzer bleibt Besitzer")
+				}
+				d.Users[i].Role = in.Role
+				return nil
+			}
+		}
+		return errors.New("nicht auf der Liste")
+	})
+	if err != nil {
+		writeErr(w, 409, err.Error())
+		return
+	}
+	a.changed(r, "role of %s set to %s", login, in.Role)
 	w.WriteHeader(http.StatusNoContent)
 }
 

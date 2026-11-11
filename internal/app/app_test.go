@@ -385,3 +385,29 @@ func TestFontsAreCachedAndPagesAreNot(t *testing.T) {
 		t.Errorf("csp %q", csp)
 	}
 }
+
+func TestCleanArgs(t *testing.T) {
+	cases := map[string]string{
+		"hallo zusammen":                  "hallo zusammen",
+		"schaut auf https://evil.example": "schaut auf",
+		"/ban jemand":                     "ban jemand",
+		"..ban jemand":                    "ban jemand",
+		"geh auf free-skins.gg/x jetzt":   "geh auf jetzt",
+		strings.Repeat("a", 100):          strings.Repeat("a", 60),
+	}
+	for in, want := range cases {
+		if got := cleanArgs(in); got != want {
+			t.Errorf("cleanArgs(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestEnglishDate(t *testing.T) {
+	start := time.Date(2027, 1, 16, 18, 0, 0, 0, berlin())
+	if got := englishDate(start); got != "Saturday, January 16, 2027, at 6 pm German time" {
+		t.Fatalf("got %q", got)
+	}
+	if got := countdownEN(start.Add(-49*time.Hour), start); got != "2 days and 1 hour to go" {
+		t.Fatalf("got %q", got)
+	}
+}

@@ -2267,8 +2267,23 @@
             busy(del, false);
           }
         };
-        row.append(av, h("div", { class: "row-main" }, title, sub), h("div", { class: "row-side" }, del));
-        row._p = { title, sub, del };
+        // the owner decides who only watches and who may change things
+        const role = h("button", { class: "btn ghost sm", type: "button" });
+        role.onclick = async () => {
+          const next = u.role === "viewer" ? "editor" : "viewer";
+          busy(role, true);
+          try {
+            await api("PATCH", "/api/users/" + encodeURIComponent(u.login), { role: next });
+            toast(next === "viewer" ? u.login + " kann jetzt nur noch ansehen." : u.login + " darf jetzt Befehle, Timer und Kanäle bearbeiten.");
+            expectState();
+          } catch (e) {
+            toast(e.message, "err");
+          } finally {
+            busy(role, false);
+          }
+        };
+        row.append(av, h("div", { class: "row-main" }, title, sub), h("div", { class: "row-side" }, role, del));
+        row._p = { title, sub, del, role };
         if (S.flash === u.login) {
           S.flash = null;
           setTimeout(() => restartAnim(row, "flash"), 50);
@@ -2277,14 +2292,17 @@
       },
       (row, u) => {
         const p = row._p;
-        once(p.title, JSON.stringify([u.login, u.owner, !!u.id, u.login === me]), () => [
+        once(p.title, JSON.stringify([u.login, u.owner, u.role, !!u.id, u.login === me]), () => [
           h("span", { class: "name", text: u.login }),
           u.owner && h("span", { class: "tag brass", text: "Besitzer" }),
+          !u.owner && u.role === "viewer" && h("span", { class: "tag off", text: "nur ansehen" }),
           u.login === me && h("span", { class: "tag teal", text: "du" }),
           !u.id && h("span", { class: "tag off", text: "noch nie angemeldet" }),
         ]);
         setText(p.sub, valid(u.last_seen) ? "Zuletzt angemeldet " + ago(u.last_seen) : valid(u.added) ? "Zugang seit " + dateLong(u.added) : "");
-        p.del.hidden = !!u.owner || u.login === me;
+        p.del.hidden = !!u.owner || u.login === me || S.me?.role !== "owner";
+        p.role.hidden = !!u.owner || S.me?.role !== "owner";
+        setText(p.role, u.role === "viewer" ? "Bearbeiten erlauben" : "Nur ansehen");
       },
       () => ["e", () => emptyState("access", "Niemand auf der Liste", "")],
       { stagger: true }

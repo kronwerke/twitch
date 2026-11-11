@@ -6,10 +6,14 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"math/rand/v2"
+	"net/http"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -40,12 +44,14 @@ var BotScopes = []string{"chat:read", "chat:edit", "user:read:chat", "user:write
 
 // App holds everything.
 type App struct {
-	cfg     Config
-	log     *slog.Logger
-	store   *store.Store
-	tw      *twitch.Client
-	chat    *irc.Client
-	started time.Time
+	cfg Config
+	// the season start the server announces (time.Time), see start()
+	serverStart atomic.Value
+	log         *slog.Logger
+	store       *store.Store
+	tw          *twitch.Client
+	chat        *irc.Client
+	started     time.Time
 
 	hub hub
 
@@ -121,6 +127,8 @@ func (a *App) Run(ctx context.Context) error {
 	a.chat.SetChannels(a.store.EnabledChannels())
 	go a.chat.Run(ctx)
 	go a.loop(ctx, time.Minute, a.refreshLive)
+	go a.loop(ctx, 10*time.Minute, a.refreshStart)
+	go a.refreshStart(ctx)
 	go a.loop(ctx, 30*time.Second, a.tickTimers)
 	go a.loop(ctx, time.Hour, func(context.Context) { a.store.SweepSessions(time.Now()) })
 	go a.refreshLive(ctx)
@@ -269,9 +277,9 @@ func (a *App) fill(text, channel, user, args string) string {
 	r := strings.NewReplacer(
 		"{user}", user,
 		"{channel}", a.displayName(channel),
-		"{args}", args,
-		"{start}", germanDate(start),
-		"{countdown}", countdown(time.Now(), start),
+		"{args}", cleanArgs(args),
+		"{start}", a.date(start),
+		"{countdown}", a.countdown(start),
 		"{discord}", a.store.Setting("discord", "https://discord.gg/DZs3XyyHDj"),
 		"{website}", a.store.Setting("website", "https://kronwerke.com"),
 		"{server}", a.store.Setting("server", "kronwerke.net"),
@@ -280,16 +288,124 @@ func (a *App) fill(text, channel, user, args string) string {
 	return r.Replace(text)
 }
 
-func (a *App) start() time.Time {
+// argsLinks matches what would turn {args} into a link: a scheme or a host with a dot.
+var argsLinks = regexp.MustCompile(`(?i)([a-z][a-z0-9+.-]*://\S*|\b[\w-]+(\.[\w-]+)*\.(com|net|org|de|gg|tv|io|ly|me|co|xyz|ru|info|app|link|to|be)\b\S*)`)
+
+// cleanArgs is what a viewer typed after a command, made safe to repeat as the bot (which
+// is a moderator, so AutoMod does not check it): no links, no chat commands, short.
+func cleanArgs(s string) string {
+	s = strings.Join(strings.Fields(s), " ")
+	s = strings.Join(strings.Fields(argsLinks.ReplaceAllString(s, "")), " ")
+	s = strings.TrimLeft(s, "/.!")
+	if r := []rune(s); len(r) > 60 {
+		s = string(r[:60])
+	}
+	return strings.TrimSpace(s)
+}
+
+func berlin() *time.Location {
 	loc, err := time.LoadLocation("Europe/Berlin")
 	if err != nil {
 		loc = time.FixedZone("CET", 3600)
 	}
-	t, err := time.ParseInLocation("2006-01-02T15:04", a.store.Setting("start", "2027-01-16T18:00"), loc)
-	if err != nil {
-		return time.Date(2027, 1, 16, 18, 0, 0, 0, loc)
+	return loc
+}
+
+// start is the season start: the setting "start" when the team set one here, else what
+// the server announces (Kronwerke Core's seasonStart through the bot's status API), else
+// the planned 16 January 2027, 18:00.
+func (a *App) start() time.Time {
+	loc := berlin()
+	if t, err := time.ParseInLocation("2006-01-02T15:04", a.store.Setting("start", ""), loc); err == nil {
+		return t
 	}
-	return t
+	if t, ok := a.serverStart.Load().(time.Time); ok && !t.IsZero() {
+		return t
+	}
+	return time.Date(2027, 1, 16, 18, 0, 0, 0, loc)
+}
+
+// refreshStart reads the start the server announces.
+func (a *App) refreshStart(ctx context.Context) {
+	url := a.store.Setting("season.status", "https://kronwerke.com/api/status")
+	if url == "" || url == "-" {
+		return
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return
+	}
+	res, err := (&http.Client{Timeout: 20 * time.Second}).Do(req)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+	var body struct {
+		Season struct {
+			Start string `json:"start"`
+		} `json:"season"`
+	}
+	if json.NewDecoder(io.LimitReader(res.Body, 1<<20)).Decode(&body) != nil {
+		return
+	}
+	if t, err := time.ParseInLocation("2006-01-02T15:04", body.Season.Start, berlin()); err == nil {
+		a.serverStart.Store(t)
+	}
+}
+
+// date and countdown speak the chat's language (setting "lang": de or en).
+func (a *App) date(t time.Time) string {
+	if a.store.Setting("lang", "de") == "en" {
+		return englishDate(t)
+	}
+	return germanDate(t)
+}
+
+func (a *App) countdown(start time.Time) string {
+	if a.store.Setting("lang", "de") == "en" {
+		return countdownEN(time.Now(), start)
+	}
+	return countdown(time.Now(), start)
+}
+
+func englishDate(t time.Time) string {
+	h := t.Hour() % 12
+	if h == 0 {
+		h = 12
+	}
+	ampm := "am"
+	if t.Hour() >= 12 {
+		ampm = "pm"
+	}
+	clock := fmt.Sprintf("%d %s", h, ampm)
+	if t.Minute() != 0 {
+		clock = fmt.Sprintf("%d:%02d %s", h, t.Minute(), ampm)
+	}
+	return fmt.Sprintf("%s, %s %d, %d, at %s German time", t.Weekday(), t.Month(), t.Day(), t.Year(), clock)
+}
+
+func countdownEN(now, start time.Time) string {
+	d := start.Sub(now)
+	if d <= 0 {
+		return "Season 2 is running"
+	}
+	days := int(d.Hours()) / 24
+	hours := int(d.Hours()) % 24
+	mins := int(d.Minutes()) % 60
+	plural := func(n int, one, many string) string {
+		if n == 1 {
+			return "1 " + one
+		}
+		return fmt.Sprintf("%d %s", n, many)
+	}
+	switch {
+	case days > 0:
+		return plural(days, "day", "days") + " and " + plural(hours, "hour", "hours") + " to go"
+	case hours > 0:
+		return plural(hours, "hour", "hours") + " and " + plural(mins, "minute", "minutes") + " to go"
+	default:
+		return plural(max(mins, 1), "minute", "minutes") + " to go"
+	}
 }
 
 var weekdays = []string{"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"}
@@ -475,6 +591,11 @@ func (a *App) refreshLive(ctx context.Context) {
 
 func (a *App) seed() {
 	a.store.Update(func(d *store.Data) error {
+		// the start was a fixed seed before 0.3.0: it follows the server now unless the team set another one
+		if d.Settings["start"] == "2027-01-16T18:00" && d.Settings["start.followed"] == "" {
+			delete(d.Settings, "start")
+			d.Settings["start.followed"] = "1"
+		}
 		if d.Seeded {
 			return nil
 		}
@@ -482,7 +603,6 @@ func (a *App) seed() {
 		if owner := store.Lower(a.cfg.Owner); owner != "" && len(d.Users) == 0 {
 			d.Users = append(d.Users, store.User{Login: owner, Owner: true, Added: time.Now()})
 		}
-		d.Settings["start"] = "2027-01-16T18:00"
 		d.Settings["discord"] = "https://discord.gg/DZs3XyyHDj"
 		d.Settings["website"] = "https://kronwerke.com"
 		d.Settings["server"] = "kronwerke.net"
