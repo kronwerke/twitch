@@ -101,6 +101,7 @@ func New(cfg Config, log *slog.Logger) (*App, error) {
 		Addr:      cfg.IRCAddr,
 		Creds:     a.botCredentials,
 		OnMessage: a.onMessage,
+		OnDropped: a.onDropped,
 		OnState: func(connected bool, detail string) {
 			a.ircState.Store(&detail)
 			if connected && cfg.Updater != nil {
@@ -206,6 +207,14 @@ func (a *App) botCredentials(ctx context.Context) (string, string, error) {
 // ---- chat ----
 
 func (a *App) onMessage(m irc.Message) {
+	switch m.Kind {
+	case "room":
+		// a channel's chat settings changed: the channels view shows them
+		a.hub.publish(event{Kind: "state", State: a.overview()})
+		return
+	case "dropped":
+		a.events.add("Twitch hat eine Nachricht in %s nicht gepostet: %s", m.Channel, m.Reason)
+	}
 	a.hub.add(m)
 	if m.Kind != "chat" || m.Self {
 		return
@@ -216,14 +225,42 @@ func (a *App) onMessage(m irc.Message) {
 	}
 }
 
-// Say posts as the bot and shows the message in the feed.
+// Say posts as the bot and shows the message in the feed. Where the channel refused a
+// link of the bot before, links go out defused (discord(.)gg/...).
 func (a *App) Say(channel, text string) error {
+	if a.chat.Room(channel).LinksBlocked {
+		text = defuseLinks(text)
+	}
 	m, err := a.chat.Say(channel, text)
 	if err != nil {
 		return err
 	}
 	a.hub.add(m)
 	return nil
+}
+
+// onDropped hears of a message Twitch refused. A message with a link that the channel's
+// moderation held back goes out once more with the link defused, and later ones too.
+func (a *App) onDropped(sent irc.Message, msgID, reason string) {
+	if !strings.HasPrefix(msgID, "msg_rejected") || !linkRE.MatchString(sent.Text) {
+		return
+	}
+	a.chat.MarkLinksBlocked(sent.Channel)
+	a.events.add("%s blockt Links des Bots, ab jetzt ohne klickbaren Link", sent.Channel)
+	if err := a.Say(sent.Channel, sent.Text); err != nil {
+		a.events.add("ohne Link in %s: %v", sent.Channel, err)
+	}
+}
+
+var linkRE = regexp.MustCompile(`(?i)\b(?:https?://)?((?:[a-z0-9-]+\.)+[a-z]{2,})(/[^\s]*)?`)
+
+// defuseLinks writes links so chat filters do not see a link: https://discord.gg/abc
+// becomes discord(.)gg/abc.
+func defuseLinks(text string) string {
+	return linkRE.ReplaceAllStringFunc(text, func(l string) string {
+		m := linkRE.FindStringSubmatch(l)
+		return strings.ReplaceAll(m[1], ".", "(.)") + m[2]
+	})
 }
 
 func (a *App) command(m irc.Message) {

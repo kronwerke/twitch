@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kronwerke/twitch/internal/irc"
 	"github.com/kronwerke/twitch/internal/store"
 	"github.com/kronwerke/twitch/internal/twitch"
 )
@@ -53,6 +54,8 @@ type ChannelView struct {
 	Image  string         `json:"image,omitempty"`
 	Live   *twitch.Stream `json:"live,omitempty"`
 	Joined bool           `json:"joined"`
+	Room   irc.Room       `json:"room"`
+	Muted  string         `json:"muted,omitempty"` // why the bot cannot write there
 }
 
 func (a *App) overview() *Overview {
@@ -80,7 +83,8 @@ func (a *App) overview() *Overview {
 		}
 		a.liveMu.RLock()
 		for _, c := range d.Channels {
-			v := ChannelView{Channel: c, Joined: joined[c.Login]}
+			v := ChannelView{Channel: c, Joined: joined[c.Login], Room: a.chat.Room(c.Login)}
+			v.Muted = v.Room.Muted()
 			if u, ok := a.users[c.Login]; ok {
 				v.Image = u.Image
 				if v.Name == "" {

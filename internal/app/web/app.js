@@ -1109,9 +1109,30 @@
   let pending = [];
   let flushQueued = false;
 
+  // dropped[ref] is why Twitch did not post the bot's message with that id
+  const dropped = new Map();
+
+  function markDropped(ref, reason) {
+    if (!ref) return;
+    dropped.set(ref, reason);
+    const li = $("#feed")?.querySelector('[data-id="' + CSS.escape(ref) + '"]');
+    if (li) dropLine(li, reason);
+  }
+
+  function dropLine(li, reason) {
+    if (li.classList.contains("dropped")) return;
+    li.classList.add("dropped");
+    li.querySelector(".msg-wait")?.remove();
+    li.querySelector(".msg-body").append(h("span", { class: "msg-drop", text: "Nicht gepostet: " + reason }));
+  }
+
   function addLines(msgs, live) {
     const fresh = [];
     for (const m of msgs) {
+      if (m && m.kind === "dropped") {
+        markDropped(m.ref, m.reason);
+        continue;
+      }
       if (!m || !KINDS_SHOWN.has(m.kind || "chat")) continue;
       const k = lineKey(m);
       if (S.seen.has(k)) continue;
@@ -1212,7 +1233,15 @@
       if (kind === "action") li.style.setProperty("--uc", col);
     }
     body.append(linkify(m.text || ""));
+    if (m.self && m.wait && m._t > Date.now()) {
+      body.append(h("span", { class: "msg-wait", text: "wartet " + m.wait + " s (Slow-Modus)" }));
+      setTimeout(() => li.querySelector(".msg-wait")?.remove(), m._t - Date.now() + 500);
+    }
     li.append(t, ch, body);
+    if (m.id) {
+      li.dataset.id = m.id;
+      if (dropped.has(m.id)) dropLine(li, dropped.get(m.id));
+    }
     if (S.filter && m.channel !== S.filter) li.hidden = true;
     return li;
   }
@@ -1474,13 +1503,24 @@
     setAvatar(p.av, c.name || c.login, c.image);
     flag(p.av, "live", !!c.live);
     setText(p.name, c.name || c.login);
-    const tagSig = JSON.stringify([!!c.live, c.live?.viewer_count, c.enabled, c.joined, S.ov.chat.connected]);
+    const r = c.room || {};
+    const tagSig = JSON.stringify([!!c.live, c.live?.viewer_count, c.enabled, c.joined, S.ov.chat.connected, r, c.muted]);
     once(p.tags, tagSig, () => {
       const t = [];
       if (c.live) t.push(h("span", { class: "tag red" }, h("span", { class: "live-dot" }), "live · " + nf.format(c.live.viewer_count || 0)));
-      if (c.enabled && c.joined) t.push(h("span", { class: "tag green", text: "im Chat" }));
+      if (c.enabled && c.joined && c.muted) t.push(h("span", { class: "tag red", title: c.muted, text: "Bot stumm: " + c.muted }));
+      else if (c.enabled && c.joined) t.push(h("span", { class: "tag green", text: "im Chat" }));
       else if (c.enabled && S.ov.chat.connected) t.push(h("span", { class: "tag brass", text: "geht in den Chat" }));
       else if (!c.enabled) t.push(h("span", { class: "tag off", text: "Bot aus" }));
+      if (c.enabled && c.joined && r.known) {
+        if (r.mod) t.push(h("span", { class: "tag", title: "Der Bot ist dort Mod oder VIP, Chat-Regeln gelten für ihn nicht", text: "Bot ist Mod" }));
+        else {
+          if (r.slow > 0) t.push(h("span", { class: "tag", title: "Der Bot wartet zwischen zwei Nachrichten " + r.slow + " Sekunden", text: "Slow " + r.slow + " s" }));
+          if (r.followers_only >= 0 && !r.not_following) t.push(h("span", { class: "tag", title: "Nur Follower dürfen schreiben. Das Bot-Konto muss dem Kanal folgen (von Hand, Twitch erlaubt das nicht per Schnittstelle).", text: "Nur Follower" }));
+          if (r.unique) t.push(h("span", { class: "tag", title: "Gleiche Nachrichten macht der Bot unsichtbar eindeutig", text: "Unique-Chat" }));
+          if (r.links_blocked) t.push(h("span", { class: "tag brass", title: "Der Kanal hat einen Link des Bots abgelehnt. Links gehen dort ohne Klick raus, zum Beispiel discord(.)gg/...", text: "Links gesperrt" }));
+        }
+      }
       return t;
     });
     if (!row._editing) {

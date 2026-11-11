@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0
+
+The bot works without moderator rights:
+- It reads each channel's chat settings and whether it is moderator or VIP there.
+- Slow mode: a message waits until the bot may write again (the chat shows "wartet 30 s").
+- The same text twice within 30 seconds, or in a unique chat, gets an invisible marker, so Twitch does not drop it as a duplicate.
+- In a subs only or emote only chat, and in a followers only chat that refused it, the bot does not write into the void; the channel says why it is silent.
+- A message Twitch did not post shows red and struck through, with the reason in German.
+- A channel that refuses a link of the bot gets the message once more with the link written as `discord(.)gg/...`, and every later link there too.
+- The channels view shows slow mode, followers only, unique chat, blocked links and "Bot ist Mod".
+
 ## 0.3.0
 
 - Roles. The owner keeps everything; editors change commands, timers and channels and write in chat; viewers only look. Settings, access and the bot account are the owner's. The owner switches a user between editor and viewer on the access page; every change is in the log.

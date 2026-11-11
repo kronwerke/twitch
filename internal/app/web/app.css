@@ -577,6 +577,11 @@ button.chip:active { transform: scale(0.95); }
 .msg a { color: var(--teal); text-decoration: underline; text-decoration-color: rgba(127, 208, 200, 0.4); text-underline-offset: 2px; }
 .msg.self { background: linear-gradient(90deg, rgba(229, 180, 81, 0.08), rgba(229, 180, 81, 0.015) 60%); border-left-color: var(--brass); }
 .msg.notice .msg-body { color: var(--muted); font-style: italic; }
+.msg.dropped { background: linear-gradient(90deg, var(--red-soft), transparent 70%); border-left-color: var(--red); }
+.msg.dropped .msg-text { text-decoration: line-through; text-decoration-color: rgba(255, 120, 110, 0.55); color: var(--muted); }
+.msg-drop, .msg-wait { display: block; margin-top: 3px; font-size: 12px; font-weight: 650; }
+.msg-drop { color: var(--red); animation: fade-in 0.3s var(--ease); }
+.msg-wait { color: var(--dim); font-style: italic; }
 .msg.event { background: var(--teal-soft); border-left-color: var(--teal); }
 .msg.event .msg-body { color: var(--teal); }
 .msg.action .msg-text { font-style: italic; color: var(--uc, var(--text)); }

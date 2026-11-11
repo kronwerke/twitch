@@ -27,7 +27,7 @@ func TestDashboardForScreenshots(t *testing.T) {
 	if mode == "" {
 		t.Skip("SHOT not set")
 	}
-	a, _, _ := newTestApp(t)
+	a, _, chat := newTestApp(t)
 	a.store.Update(func(d *store.Data) error {
 		d.Users[0].ID = "111"
 		d.Users[0].LastSeen = time.Now().Add(-3 * time.Minute)
@@ -66,6 +66,16 @@ func TestDashboardForScreenshots(t *testing.T) {
 		// the fake chat server of the tests: the bot connects and sits in the channels
 		a.chat.SetChannels(a.store.EnabledChannels())
 		go a.chat.Run(t.Context())
+		go func() {
+			<-chat.ready
+			time.Sleep(300 * time.Millisecond)
+			chat.raw("@emote-only=0;followers-only=-1;r9k=1;slow=30;subs-only=0 :tmi.twitch.tv ROOMSTATE #menon")
+			chat.raw("@emote-only=0;followers-only=0;r9k=0;slow=0;subs-only=0 :tmi.twitch.tv ROOMSTATE #novo")
+			chat.raw("@emote-only=0;followers-only=-1;r9k=0;slow=0;subs-only=1 :tmi.twitch.tv ROOMSTATE #itzamnix")
+			chat.raw("@emote-only=0;followers-only=-1;r9k=0;slow=0;subs-only=0 :tmi.twitch.tv ROOMSTATE #carla")
+			chat.raw("@badges=moderator/1;mod=1 :tmi.twitch.tv USERSTATE #carla")
+			a.chat.MarkLinksBlocked("novo")
+		}()
 	}
 	for _, e := range []string{"elchi_dev signed in", "elchi_dev: channel novo added", "update check: Get \"https://api.github.com/repos/kronwerke/twitch/releases/latest\": dial tcp: i/o timeout",
 		"elchi_dev: command !regeln saved", "bot token renewed", "elchi_dev: timer Start und Discord saved", "menon signed in", "elchi_dev: settings changed"} {
@@ -77,7 +87,9 @@ func TestDashboardForScreenshots(t *testing.T) {
 		{Channel: "menon", User: "Menon", Login: "menon", Text: "heute bauen wir die erste Mühle", Broadcaster: true, Color: "#e5b451"},
 		{Channel: "menon", User: "Holzwurm", Login: "holzwurm", Text: "die Mühle wird so gut", Color: "#1E90FF"},
 		{Channel: "novo", User: "Ben", Login: "ben", Text: "!discord", Color: "#8fd18b"},
-		{Channel: "novo", User: "KronwerkeBot", Text: "Der Kronwerke-Discord: https://discord.gg/DZs3XyyHDj Dort holst du dir auch deinen Platz auf der Whitelist.", Self: true},
+		{ID: "self-shot-1", Channel: "novo", User: "KronwerkeBot", Text: "Der Kronwerke-Discord: https://discord.gg/DZs3XyyHDj Dort holst du dir auch deinen Platz auf der Whitelist.", Self: true},
+		{Channel: "novo", Kind: "dropped", Ref: "self-shot-1", Reason: "von den Moderationsregeln des Kanals abgelehnt"},
+		{Channel: "novo", User: "KronwerkeBot", Text: "Der Kronwerke-Discord: discord(.)gg/DZs3XyyHDj Dort holst du dir auch deinen Platz auf der Whitelist.", Self: true},
 		{Channel: "menon", User: "Lea_Baut", Login: "lea_baut", Text: "kann man auch mit Freunden auf einen Server?", Color: "#FF69B4", VIP: true},
 		{Channel: "menon", User: "Ruben", Login: "ruben", Text: "@Lea_Baut ja, alle auf einen, das ist ja der Witz", Mod: true, Color: "#00FF7F"},
 		{Channel: "itzamnix", Text: "Itzamnix hat den Slow-Modus aktiviert.", Kind: "notice"},
