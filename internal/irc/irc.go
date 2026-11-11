@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 // Message is one line of chat, or a notice from Twitch.
@@ -176,9 +177,9 @@ func (c *Client) Say(channel, text string) (Message, error) {
 	if text == "" {
 		return Message{}, errors.New("leere Nachricht")
 	}
-	if len(text) > 500 {
-		text = text[:500]
-	}
+	// Twitch takes 500 bytes; the rest of the room is for the invisible marker that makes
+	// a repeated text unique
+	text = cutBytes(text, 500-2*len(invisible))
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.conn == nil {
@@ -650,4 +651,15 @@ func batch(s []string, n int) [][]string {
 		s = s[k:]
 	}
 	return out
+}
+
+// cutBytes shortens a text to at most n bytes without splitting a character.
+func cutBytes(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
 }

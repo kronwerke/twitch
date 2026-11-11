@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+- Long messages are cut at a character boundary, not in the middle of an umlaut, and leave room for the invisible marker. (R3-14)
+
 ## 0.4.0
 
 The bot works without moderator rights:
