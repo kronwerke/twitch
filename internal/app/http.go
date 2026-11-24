@@ -810,7 +810,7 @@ func page(w http.ResponseWriter, status int, msg string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(status)
 	fmt.Fprintf(w, `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kronwerke Twitch</title>
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.png" type="image/png">
 <style>@font-face{font-family:"Schibsted Grotesk";src:url("/fonts/schibsted-grotesk-latin-wght-normal.woff2") format("woff2");font-weight:400 900}
 body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(600px 380px at 50%% 18%%,rgba(229,180,81,.12),transparent 70%%),#0d0b10;color:#f2ede3;font:15px/1.55 "Schibsted Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 main{max-width:24rem;margin:1.5rem;padding:2.5rem 2rem 2rem;border-radius:22px;background:linear-gradient(180deg,rgba(34,29,39,.75),rgba(23,20,27,.9));border:1px solid rgba(242,237,227,.08);text-align:center}

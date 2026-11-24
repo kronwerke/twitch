@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2
+
+- The new Kronwerke crown replaces the old mark on the sign-in card, in the sidebar and as the favicon.
+
 ## 0.4.1
 
 - Long messages are cut at a character boundary, not in the middle of an umlaut, and leave room for the invisible marker. (R3-14)

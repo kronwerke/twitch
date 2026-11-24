@@ -74,7 +74,6 @@ body {
 .i .fill, symbol .fill { fill: currentColor; stroke: none; }
 #i-more circle { fill: currentColor; stroke: none; }
 #i-play path { fill: currentColor; stroke: none; }
-#i-mark path { stroke-width: 3.2; }
 
 a { color: var(--brass); text-decoration: none; }
 a:hover { color: var(--brass-hi); }
@@ -132,9 +131,10 @@ button { cursor: pointer; }
   box-shadow: 0 0 0 1px rgba(229, 180, 81, 0.28) inset, 0 6px 18px -8px rgba(229, 180, 81, 0.5);
   color: var(--brass);
 }
-.logo .i { width: 26px; height: 26px; }
+/* the crown of the logo fills the plate */
+.logo { overflow: hidden; }
+.logo img { display: block; width: 100%; height: 100%; }
 .logo.lg { width: 60px; height: 60px; border-radius: 18px; }
-.logo.lg .i { width: 42px; height: 42px; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
 .brand-name { font-weight: 800; letter-spacing: 0.01em; font-size: 15.5px; }
 .brand-sub { color: var(--muted); font-size: 12.5px; }
